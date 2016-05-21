@@ -45,6 +45,11 @@ long long WINDOW_SIZE;
 int K;
 int ZZ = 0;
 
+// output_disjoint_motifs: if the value is equal to 1, only ouput pairs of motifs that are disjoint, i.e if motif length = 2, and motif (1,5) is already ouput then
+// we discard (2,9) because the subsequence 1 and 2 are overlapped. WARNING: this option only works for naive motif algorithm, kMotif does not guarantee that it will return the same result
+// as nmotif when output_disjoint_motifs = 1
+int output_disjoint_motifs;
+
 // Clock
 double	TOTAL_TIME = 0;
 double	DIST_TIME = 0;	
@@ -232,7 +237,9 @@ void kmotif_back_Update(deque<struct node> &nodes, int p_iK, int p_iMotifLength)
 
 }
 
-//print top-k motif pairs
+// print top-k motif pairs
+// nodes: the summary
+// p_iK: K
 void query(deque<struct node> &nodes, int p_iK)
 {
 	list<struct point> output;
@@ -275,17 +282,20 @@ void query(deque<struct node> &nodes, int p_iK)
 		else
 		{
 			bool bIsTrueMotif = true;
-			for ( iterlistMotif = listMotif.begin(); iterlistMotif != listMotif.end(); iterlistMotif++ )
-			{
-				if ( abs( ( iterlistMotif->fromID - iFromID) ) <= MOTIF_LENGTH || 
-					 abs( ( iterlistMotif->toID   - iToID) ) <= MOTIF_LENGTH ||
-					 abs( ( iterlistMotif->fromID - iToID) ) <= MOTIF_LENGTH || 
-					 abs( ( iterlistMotif->toID   - iFromID) ) <= MOTIF_LENGTH )
+			if (output_disjoint_motifs == 1){
+				for ( iterlistMotif = listMotif.begin(); iterlistMotif != listMotif.end(); iterlistMotif++ )
 				{
-					bIsTrueMotif = false;					
-					break;
-				}
-			}
+					if ( abs( ( iterlistMotif->fromID - iFromID) ) <= MOTIF_LENGTH || 
+						 abs( ( iterlistMotif->toID   - iToID) ) <= MOTIF_LENGTH ||
+						 abs( ( iterlistMotif->fromID - iToID) ) <= MOTIF_LENGTH || 
+						 abs( ( iterlistMotif->toID   - iFromID) ) <= MOTIF_LENGTH )
+					{
+						bIsTrueMotif = false;					
+						break;
+					}
+				}			
+			}			
+			
 			if ( bIsTrueMotif )
 			{
 				listMotif.push_back(*pi);
@@ -335,10 +345,11 @@ int main(int argc, char *argv[])
 		K = atol( argv[5] );
 		iOption = atol( argv[6] );
 		iQueryPoint = atol( argv[7] );
+		output_disjoint_motifs = atol( argv[8] );
     }
     else
 	{
-		printf("Command file data_size window_length motif_length k naive_or_kmotif query_every_window_of_size_q\n");
+		printf("Command file data_size window_length motif_length k naive_or_kmotif query_every_window_of_size_q output_disjoint_motifs\n");
 		pFileName = fopen("EOG.txt", "r");
 		if( pFileName == NULL ) 
 			error(2);
@@ -461,4 +472,3 @@ int main(int argc, char *argv[])
     system("PAUSE");
     return 1;   
 }
-
